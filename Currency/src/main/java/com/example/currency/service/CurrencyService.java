@@ -19,16 +19,21 @@ import java.util.logging.Logger;
 @RequiredArgsConstructor
 
 public class CurrencyService {
+
     private final CurrencyRepo repo;
-    public void savecurrency(@Valid Currencies currencies) {
+
+
+    public void saveCurrency(@Valid Currencies currencies) {
         repo.save(currencies);
     }
+
     public List<Currencies> getcurrency(){
         return repo.findAll();
     }
-    public java.util.Optional<Currencies> getcurrency(String id){
-        java.util.Optional<Currencies> currencyOptional = repo.findById(id);
-        return currencyOptional;
+    public Currencies getcurrencyById(String id) throws ResourceNotFoundException {
+
+        return  repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + id));
     }
     public Currencies updatedata(String id, Currencies currencies) throws ResourceNotFoundException {
         try {

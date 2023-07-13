@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,44 +27,54 @@ public class CurrencyController {
     private static final Logger logger = LoggerFactory.getLogger(CurrencyController.class);
 
     @Autowired
-    private CurrencyService currencyservice;
+    private CurrencyService currencyService;
 
     @PostMapping
+    @CacheEvict(value = "cachedCurrency", allEntries = true)
     public ResponseEntity<String> savecurrency(@Valid @RequestBody Currencies currency){
-        currencyservice.savecurrency(currency);
+        logger.info("Saving currency");
+        currencyService.saveCurrency(currency);
+        logger.info("Currency added successfully");
         return ResponseEntity.ok("Currency addded successfully");
     }
 
     @GetMapping
     @Cacheable(value = "cachedCurrency")
     public List<Currencies> getallcurrency(){
-        logger.info("calling from db");
-        return this.currencyservice.getcurrency();
+        logger.info("Retrieving all currencies");
+        List<Currencies> currencies = currencyService.getcurrency();
+        logger.info("Retrieved all currencies successfully");
+        return currencies;
     }
 
 
     @GetMapping("/{id}")
     @Cacheable(value = "cachedCurrency", key="#id")
-    public Optional<Currencies>getcurrencybyid(@PathVariable String id){
-        logger.info("calling from db");
-        return currencyservice.getcurrency(id);
+    public Currencies getCurrencyById(@PathVariable String id) throws ResourceNotFoundException {
+        logger.info("Retrieving currency by id: {}", id);
+        Currencies currency = currencyService.getcurrencyById(id);
+        logger.info("Retrieved currency by id: {} successfully", id);
+        return currency;
     }
+
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updatedata(@PathVariable String id, @Valid @RequestBody Currencies currencies) throws ResourceNotFoundException
-    {
+    @CacheEvict(value = "cachedCurrency", allEntries = true)
+    public ResponseEntity<String> updateData(@PathVariable String id, @Valid @RequestBody Currencies currencies)
+            throws ResourceNotFoundException {
+        logger.info("Updating currency with id: {}", id);
         currencies.setId(id);
-        currencyservice.updatedata(id, currencies);
+        currencyService.updatedata(id, currencies);
+        logger.info("Updated currency with id: {} successfully", id);
         return ResponseEntity.ok("Updated successfully");
-
     }
-    @CacheEvict(value = "cachedCurrency")
+    @CacheEvict(value = "cachedCurrency", allEntries = true)
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCurrency(@PathVariable String id) throws ResourceNotFoundException {
-
-        currencyservice.deleteById(id);
+        logger.info("Deleting currency with id: {}", id);
+        currencyService.deleteById(id);
+        logger.info("Deleted currency with id: {} successfully", id);
         return ResponseEntity.ok("Deleted successfully");
-
     }
 }
